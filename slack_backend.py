@@ -1,53 +1,51 @@
-import requests
+import os
 from flask import Flask, request, jsonify
+import requests
 
 app = Flask(__name__)
 
-# Function to send a modal to Slack using the trigger_id
-def send_modal(trigger_id, user_id):
-    url = 'https://slack.com/api/views.open'
-    headers = {
-        'Authorization': 'Bearer xoxb-your-slack-token',  # Use your Slack bot token here
-        'Content-Type': 'application/json',
-    }
-    data = {
-        "trigger_id": trigger_id,
-        "view": {
-            "type": "modal",
-            "callback_id": "modal-identifier",
-            "title": {
-                "type": "plain_text",
-                "text": "My Modal"
-            },
-            "blocks": [
-                {
-                    "type": "section",
-                    "block_id": "section-identifier",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": f"Hello {user_id}, you triggered the command!"
-                    }
-                }
-            ]
-        }
-    }
-
-    response = requests.post(url, headers=headers, json=data)
-    print(response.json())  # For debugging
+SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
+SLACK_USER_TOKEN = os.getenv("SLACK_USER_TOKEN")
 
 @app.route('/slash', methods=['POST'])
 def slack_slash_command():
     # Get the data from the Slack request
     data = request.form
-    print(f"Received data: {data}")  # For debugging
 
-    # Call the send_modal function to trigger the modal
-    send_modal(data.get('trigger_id'), data.get('user_id'))
+    # Debug log to check the received data
+    print(f"Received data: {data}")
 
-    # Respond back to Slack (even though a modal will be triggered)
+    # Send the pop-up dialog to Slack using the Slack API
+    trigger_id = data.get('trigger_id')
+    dialog_data = {
+        "trigger_id": trigger_id,
+        "dialog": {
+            "callback_id": "error_dialog",
+            "title": "Error Dialog",
+            "submit_label": "Submit",
+            "elements": [
+                {
+                    "label": "Error Details",
+                    "type": "textarea",
+                    "name": "error_details",
+                    "placeholder": "Enter error details here"
+                }
+            ]
+        }
+    }
+
+    response = requests.post(
+        'https://slack.com/api/dialog.open',
+        headers={'Authorization': f'Bearer {SLACK_BOT_TOKEN}'},
+        data=dialog_data
+    )
+
+    # Example response message
     response_text = f"Hello {data.get('user_name')}! You triggered the command: {data.get('command')}"
+
+    # Return a response to Slack
     return jsonify({
-        "response_type": "ephemeral",  # This can still be a private message if needed
+        "response_type": "in_channel",  # Can also be "ephemeral" for private messages
         "text": response_text
     })
 
