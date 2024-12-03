@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
+# Ensure this is the correct endpoint that Slack will use for the slash command
 @app.route('/slash', methods=['POST'])
 def slack_slash_command():
     # Get the data from the Slack request
@@ -17,5 +18,5 @@ def slack_slash_command():
     })
 
 if __name__ == "__main__":
-    # Start the Flask server
+    # Start the Flask server, running on all IPs (needed for Render)
     app.run(host='0.0.0.0', port=3000)
