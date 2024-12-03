@@ -34,11 +34,16 @@ def slack_slash_command():
         }
     }
 
+    # Sending the API request to Slack to open the dialog
     response = requests.post(
         'https://slack.com/api/dialog.open',
         headers={'Authorization': f'Bearer {SLACK_BOT_TOKEN}'},
-        data=dialog_data
+        json=dialog_data  # Use JSON format to send the data
     )
+
+    # Debug: Log the response from Slack API
+    print(f"Slack response status: {response.status_code}")
+    print(f"Slack response: {response.text}")
 
     # Example response message
     response_text = f"Hello {data.get('user_name')}! You triggered the command: {data.get('command')}"
